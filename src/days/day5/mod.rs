@@ -6,7 +6,6 @@ use std::{
     path::PathBuf,
 };
 
-use regex::Regex;
 use structopt::StructOpt;
 
 use super::{todays_input, Day};
@@ -93,18 +92,13 @@ impl Day5 {
         let file = BufReader::new(File::open(&self.infile)?);
 
         let mut vents: Vec<Vent> = Vec::new();
-        let vent_re = Regex::new(r"(\d+),(\d+) -> (\d+),(\d+)")?;
 
         let mut width = 0;
         let mut height = 0;
         for line_res in file.lines() {
-            let line = line_res
-                .map_err(|e| format!("invalid line: {}", e).to_string())?;
-
-            let vent = match vent_re.captures(&line) {
-                Some(caps) => caps.try_into()?,
-                None => return Err(format!("invalid vent: {}", line).into()),
-            };
+            let vent = line_res
+                .map_err(|e| format!("invalid line: {}", e).to_string())?
+                .parse()?;
 
             match &vent {
                 Vent::Horizontal(v_h) => {
