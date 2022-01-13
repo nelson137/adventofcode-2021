@@ -90,7 +90,7 @@ impl CaveGraph {
 
     pub fn find_all_paths_with(
         &self,
-        skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, usize) -> bool,
+        skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, bool, usize) -> bool,
     ) -> usize {
         let mut path = Vec::with_capacity(self.nodes.len() * 2);
         let mut visits = vec![0_usize; self.nodes.len()];
@@ -109,23 +109,23 @@ impl CaveGraph {
         &'a self,
         path: &mut Vec<usize>,
         visits: &mut Vec<usize>,
-        skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, usize) -> bool,
+        skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, bool, usize) -> bool,
         count: &mut usize,
         node: usize,
     ) {
         path.push(node);
         visits[node] += 1;
 
-        // if path.len() > 0 {
-        //     print!("{:?}", self.nodes[path[0]]);
-        //     for i in 1..path.len() {
-        //         print!(",{:?}", self.nodes[path[i]]);
-        //     }
-        //     println!("");
-        // }
+        let small_double_visit = visits
+            .iter()
+            .zip(&self.nodes)
+            .find(|(v, n)| n.is_small() && **v >= 2)
+            .is_some();
 
         for a in &self.adj[node] {
-            if *a == self.start_i || skip_node(self, visits, *a) {
+            if *a == self.start_i
+                || skip_node(self, visits, small_double_visit, *a)
+            {
                 continue;
             }
             if *a == self.end_i {
