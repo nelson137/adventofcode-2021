@@ -63,7 +63,6 @@ impl Debug for Node {
 
 pub struct CaveGraph {
     pub nodes: Vec<Node>,
-    is_small: Vec<bool>,
     adj: Vec<Vec<usize>>,
     start_i: usize,
     end_i: usize,
@@ -86,16 +85,14 @@ impl CaveGraph {
             adj[*indexes.get(b).unwrap()].push(*indexes.get(a).unwrap());
         }
 
-        let is_small = nodes.iter().map(Node::is_small).collect();
-
-        Self { nodes, adj, is_small, start_i, end_i }
+        Self { nodes, adj, start_i, end_i }
     }
 
     pub fn find_all_paths_with(
         &self,
         skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, usize) -> bool,
     ) -> usize {
-        let mut path = Vec::with_capacity(self.nodes.len());
+        let mut path = Vec::with_capacity(self.nodes.len() * 2);
         let mut visits = vec![0_usize; self.nodes.len()];
         let mut count = 0;
         self.find_all_paths_impl(
@@ -127,14 +124,13 @@ impl CaveGraph {
         //     println!("");
         // }
 
-        if *path.last().unwrap() == self.end_i {
-            *count += 1;
-        } else {
-            for a in &self.adj[node] {
-                if *a == self.start_i || skip_node(self, visits, *a) {
-                    continue;
-                }
-                // TODO: move `if is end` check here
+        for a in &self.adj[node] {
+            if *a == self.start_i || skip_node(self, visits, *a) {
+                continue;
+            }
+            if *a == self.end_i {
+                *count += 1;
+            } else {
                 self.find_all_paths_impl(path, visits, skip_node, count, *a);
             }
         }
