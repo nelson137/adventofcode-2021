@@ -25,10 +25,10 @@ impl Day for Day4 {
         let (numbers, mut boards) = self.parse_bingo()?;
 
         let mut maybe_answer = None;
+
         'draw_num: for num in &numbers {
             for b in &mut boards {
-                b.mark(*num);
-                if b.is_win() {
+                if b.mark_check(*num) {
                     maybe_answer = Some(b.sum_unmarked() * num);
                     break 'draw_num;
                 }
@@ -53,15 +53,15 @@ impl Day for Day4 {
         let mut maybe_answer = None;
         'draw_num: for num in &numbers {
             for (i, b) in boards.iter_mut().enumerate() {
-                if !board_wins[i] {
-                    b.mark(*num);
-                    if b.is_win() {
-                        board_wins[i] = true;
-                        num_wins += 1;
-                        if num_wins == num_boards {
-                            maybe_answer = Some(b.sum_unmarked() * num);
-                            break 'draw_num;
-                        }
+                if board_wins[i] {
+                    continue;
+                }
+                if b.mark_check(*num) {
+                    board_wins[i] = true;
+                    num_wins += 1;
+                    if num_wins == num_boards {
+                        maybe_answer = Some(b.sum_unmarked() * num);
+                        break 'draw_num;
                     }
                 }
             }
