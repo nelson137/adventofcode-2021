@@ -23,7 +23,7 @@ pub struct Day12 {
 impl Day for Day12 {
     fn part1(&self) -> Result<(), Box<dyn Error>> {
         let cave = self.parse_cave_graph()?;
-        let answer = cave.find_all_paths_with(|g, visits, n| {
+        let answer = cave.find_all_paths_with(|g, visits, _, n| {
             g.nodes[n].is_small() && visits[n] >= 1
         });
         println!("{}", answer);
@@ -32,14 +32,10 @@ impl Day for Day12 {
 
     fn part2(&self) -> Result<(), Box<dyn Error>> {
         let cave = self.parse_cave_graph()?;
-        let answer = cave.find_all_paths_with(|g, visits, n| {
-            let did_extra_visit = visits
-                .iter()
-                .zip(&g.nodes)
-                .find(|(v, n)| n.is_small() && **v >= 2)
-                .is_some();
-            g.nodes[n].is_small() && visits[n] >= 1 && did_extra_visit
-        });
+        let answer =
+            cave.find_all_paths_with(|g, visits, small_double_visit, n| {
+                g.nodes[n].is_small() && visits[n] >= 1 && small_double_visit
+            });
         println!("{}", answer);
         Ok(())
     }
