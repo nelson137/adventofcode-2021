@@ -90,6 +90,7 @@ decl_day! {
     day9 => Day9;
     day10 => Day10;
     day11 => Day11;
+    day12 => Day12;
 }
 
 macro_rules! todays_input {
