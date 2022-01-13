@@ -104,14 +104,17 @@ impl CaveGraph {
         self.adj.get(node).unwrap()
     }
 
-    pub fn find_all_paths(&self, max_extra_small_visits: usize) -> usize {
+    pub fn find_all_paths(
+        &self,
+        one_small_extra_visits: Option<usize>,
+    ) -> usize {
         let mut path = Vec::with_capacity(self.nodes.len());
         let mut visited = HashMap::from_iter(self.nodes.iter().map(|n| (n, 0)));
         let mut count = 0;
         self.find_all_paths_impl(
             &mut path,
             &mut visited,
-            max_extra_small_visits,
+            one_small_extra_visits,
             &mut count,
             &Node::Start,
         );
@@ -122,7 +125,7 @@ impl CaveGraph {
         &'a self,
         path: &mut Vec<&'a Node>,
         small_visits: &mut HashMap<&'a Node, usize>,
-        max_extra_small_visits: usize,
+        one_small_extra_visits: Option<usize>,
         count: &mut usize,
         node: &'a Node,
     ) {
@@ -131,10 +134,12 @@ impl CaveGraph {
             *small_visits.get_mut(node).unwrap() += 1;
         }
 
-        let did_visit_extra = small_visits
-            .values()
-            .find(|v| **v >= max_extra_small_visits)
-            .is_some();
+        let did_visit_extra = if let Some(extra_visits) = one_small_extra_visits
+        {
+            small_visits.values().find(|v| **v >= extra_visits).is_some()
+        } else {
+            false
+        };
 
         if path.last().unwrap().is_end() {
             *count += 1;
@@ -145,14 +150,20 @@ impl CaveGraph {
                 }
                 if neighbor.is_small() {
                     let visits = *small_visits.get(neighbor).unwrap();
-                    if visits >= max_extra_small_visits - 1 && did_visit_extra {
-                        continue;
+                    if let Some(extra_visits) = one_small_extra_visits {
+                        if visits >= extra_visits - 1 && did_visit_extra {
+                            continue;
+                        }
+                    } else {
+                        if visits >= 1 {
+                            continue;
+                        }
                     }
                 }
                 self.find_all_paths_impl(
                     path,
                     small_visits,
-                    max_extra_small_visits,
+                    one_small_extra_visits,
                     count,
                     neighbor,
                 );
