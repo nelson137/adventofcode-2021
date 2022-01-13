@@ -1,21 +1,14 @@
 use std::{
     error::Error,
     fmt::{self, Formatter},
+    str::FromStr,
 };
 
-use regex::Captures;
-
-trait OrderedVars<T>
-where
-    T: PartialOrd,
-{
+trait OrderedVars<T: PartialOrd> {
     fn ordered(self) -> (T, T);
 }
 
-impl<T> OrderedVars<T> for (T, T)
-where
-    T: PartialOrd,
-{
+impl<T: PartialOrd> OrderedVars<T> for (T, T) {
     #[inline]
     fn ordered(self) -> (T, T) {
         if self.0 <= self.1 {
@@ -33,19 +26,28 @@ pub enum Vent {
     Diagonal(VentDiagonal),
 }
 
-impl<'a> TryFrom<Captures<'a>> for Vent {
-    type Error = Box<dyn Error>;
+impl FromStr for Vent {
+    type Err = Box<dyn Error>;
 
-    fn try_from(cap: Captures) -> Result<Self, Self::Error> {
-        macro_rules! parse_coord_match {
-            ($i:literal) => {{
-                cap.get($i).unwrap().as_str().parse()?
-            }};
-        }
-        let x1 = parse_coord_match!(1);
-        let y1 = parse_coord_match!(2);
-        let x2 = parse_coord_match!(3);
-        let y2 = parse_coord_match!(4);
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        let mut points = value.split(" -> ");
+        let (p1, p2) = match (points.next(), points.next(), points.next()) {
+            (Some(a), Some(b), None) => (a, b),
+            _ => return Err(format!("invalid vent: {}", value).into()),
+        };
+
+        let mut p1_xy = p1.split(',');
+        let (x1, y1) = match (p1_xy.next(), p1_xy.next(), p1_xy.next()) {
+            (Some(x), Some(y), None) => (x.trim().parse()?, y.trim().parse()?),
+            _ => return Err(format!("invalid point in vent: {}", value).into()),
+        };
+
+        let mut p2_xy = p2.split(',');
+        let (x2, y2) = match (p2_xy.next(), p2_xy.next(), p2_xy.next()) {
+            (Some(x), Some(y), None) => (x.trim().parse()?, y.trim().parse()?),
+            _ => return Err(format!("invalid point in vent: {}", value).into()),
+        };
+
         if y1 == y2 {
             let (x1, x2) = (x1, x2).ordered();
             Ok(Self::Horizontal(VentHorizontal { y: y1, x1, x2 }))
