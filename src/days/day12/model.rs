@@ -43,17 +43,9 @@ impl Hash for Node {
 
 impl Node {
     #[inline]
-    pub fn is_start(&self) -> bool {
+    pub fn is_small(&self) -> bool {
         match *self {
-            Node::Start => true,
-            _ => false,
-        }
-    }
-
-    #[inline]
-    pub fn is_end(&self) -> bool {
-        match *self {
-            Node::End => true,
+            Node::Small(_) => true,
             _ => false,
         }
     }
@@ -70,8 +62,11 @@ impl Debug for Node {
 }
 
 pub struct CaveGraph {
-    nodes: Vec<Node>,
-    adj: HashMap<Node, Vec<Node>>,
+    pub nodes: Vec<Node>,
+    is_small: Vec<bool>,
+    adj: Vec<Vec<usize>>,
+    start_i: usize,
+    end_i: usize,
 }
 
 impl CaveGraph {
@@ -80,76 +75,71 @@ impl CaveGraph {
             edges.iter().map(|(a, b)| [a, b]).flatten().collect();
 
         let nodes: Vec<Node> = node_set.iter().map(|&n| n.clone()).collect();
+        let indexes: HashMap<&Node, usize> =
+            HashMap::from_iter(nodes.iter().enumerate().map(|(i, n)| (n, i)));
+        let start_i = *indexes.get(&Node::Start).unwrap();
+        let end_i = *indexes.get(&Node::End).unwrap();
 
-        let mut adj =
-            HashMap::from_iter(nodes.iter().map(|n| (n.clone(), Vec::new())));
+        let mut adj = vec![Vec::new(); nodes.len()];
         for (a, b) in &edges {
-            adj.get_mut(a).unwrap().push(b.clone());
-            adj.get_mut(b).unwrap().push(a.clone());
+            adj[*indexes.get(a).unwrap()].push(*indexes.get(b).unwrap());
+            adj[*indexes.get(b).unwrap()].push(*indexes.get(a).unwrap());
         }
 
-        Self { nodes, adj }
-    }
+        let is_small = nodes.iter().map(Node::is_small).collect();
 
-    #[inline]
-    pub fn get_neighbors(&self, node: &Node) -> &Vec<Node> {
-        self.adj.get(node).unwrap()
+        Self { nodes, adj, is_small, start_i, end_i }
     }
 
     pub fn find_all_paths_with(
         &self,
-        skip_node: impl Copy + Fn(&mut HashMap<&Node, usize>, &Node) -> bool,
+        skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, usize) -> bool,
     ) -> usize {
         let mut path = Vec::with_capacity(self.nodes.len());
-        let mut small_visits =
-            HashMap::from_iter(self.nodes.iter().filter_map(|n| match *n {
-                Node::Small(_) => Some((n, 0)),
-                _ => None,
-            }));
+        let mut visits = vec![0_usize; self.nodes.len()];
         let mut count = 0;
         self.find_all_paths_impl(
             &mut path,
-            &mut small_visits,
+            &mut visits,
             skip_node,
             &mut count,
-            &Node::Start,
+            self.start_i,
         );
         count
     }
 
     fn find_all_paths_impl<'a>(
         &'a self,
-        path: &mut Vec<&'a Node>,
-        small_visits: &mut HashMap<&'a Node, usize>,
-        skip_node: impl Copy + Fn(&mut HashMap<&Node, usize>, &Node) -> bool,
+        path: &mut Vec<usize>,
+        visits: &mut Vec<usize>,
+        skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, usize) -> bool,
         count: &mut usize,
-        node: &'a Node,
+        node: usize,
     ) {
         path.push(node);
-        if let Some(visits) = small_visits.get_mut(node) {
-            *visits += 1;
-        }
+        visits[node] += 1;
 
-        if path.last().unwrap().is_end() {
+        // if path.len() > 0 {
+        //     print!("{:?}", self.nodes[path[0]]);
+        //     for i in 1..path.len() {
+        //         print!(",{:?}", self.nodes[path[i]]);
+        //     }
+        //     println!("");
+        // }
+
+        if *path.last().unwrap() == self.end_i {
             *count += 1;
         } else {
-            for neighbor in self.get_neighbors(node) {
-                if neighbor.is_start() || skip_node(small_visits, neighbor) {
+            for a in &self.adj[node] {
+                if *a == self.start_i || skip_node(self, visits, *a) {
                     continue;
                 }
-                self.find_all_paths_impl(
-                    path,
-                    small_visits,
-                    skip_node,
-                    count,
-                    neighbor,
-                );
+                // TODO: move `if is end` check here
+                self.find_all_paths_impl(path, visits, skip_node, count, *a);
             }
         }
 
         path.pop();
-        if let Some(visits) = small_visits.get_mut(node) {
-            *visits -= 1;
-        }
+        visits[node] -= 1;
     }
 }
