@@ -104,14 +104,14 @@ impl CaveGraph {
         self.adj.get(node).unwrap()
     }
 
-    pub fn find_all_paths(&self) -> usize {
+    pub fn find_all_paths(&self, max_extra_small_visits: usize) -> usize {
         let mut path = Vec::with_capacity(self.nodes.len());
-        let mut visited =
-            HashMap::from_iter(self.nodes.iter().map(|n| (n, false)));
+        let mut visited = HashMap::from_iter(self.nodes.iter().map(|n| (n, 0)));
         let mut count = 0;
         self.find_all_paths_impl(
             &mut path,
             &mut visited,
+            max_extra_small_visits,
             &mut count,
             &Node::Start,
         );
@@ -121,27 +121,47 @@ impl CaveGraph {
     fn find_all_paths_impl<'a>(
         &'a self,
         path: &mut Vec<&'a Node>,
-        visited: &mut HashMap<&'a Node, bool>,
+        small_visits: &mut HashMap<&'a Node, usize>,
+        max_extra_small_visits: usize,
         count: &mut usize,
         node: &'a Node,
     ) {
         path.push(node);
         if node.is_small() {
-            *visited.get_mut(node).unwrap() = true;
+            *small_visits.get_mut(node).unwrap() += 1;
         }
+
+        let did_visit_extra = small_visits
+            .values()
+            .find(|v| **v >= max_extra_small_visits)
+            .is_some();
 
         if path.last().unwrap().is_end() {
             *count += 1;
-            // println!("{:?}", path);
         } else {
             for neighbor in self.get_neighbors(node) {
-                if !neighbor.is_start() && !visited.get(neighbor).unwrap() {
-                    self.find_all_paths_impl(path, visited, count, neighbor);
+                if neighbor.is_start() {
+                    continue;
                 }
+                if neighbor.is_small() {
+                    let visits = *small_visits.get(neighbor).unwrap();
+                    if visits >= max_extra_small_visits - 1 && did_visit_extra {
+                        continue;
+                    }
+                }
+                self.find_all_paths_impl(
+                    path,
+                    small_visits,
+                    max_extra_small_visits,
+                    count,
+                    neighbor,
+                );
             }
         }
 
         path.pop();
-        *visited.get_mut(node).unwrap() = false;
+        if node.is_small() {
+            *small_visits.get_mut(node).unwrap() -= 1;
+        }
     }
 }
