@@ -22,13 +22,13 @@ pub struct Day12 {
 
 impl Day for Day12 {
     fn part1(&self) -> Result<(), Box<dyn Error>> {
-        let answer = self.parse_cave_graph()?.find_all_paths(1);
+        let answer = self.parse_cave_graph()?.find_all_paths(None);
         println!("{}", answer);
         Ok(())
     }
 
     fn part2(&self) -> Result<(), Box<dyn Error>> {
-        let answer = self.parse_cave_graph()?.find_all_paths(2);
+        let answer = self.parse_cave_graph()?.find_all_paths(Some(2));
         println!("{}", answer);
         Ok(())
     }
