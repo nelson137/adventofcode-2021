@@ -21,9 +21,9 @@ impl<T: PartialOrd> OrderedVars<T> for (T, T) {
 
 #[derive(Debug)]
 pub enum Vent {
-    Horizontal(VentHorizontal),
-    Vertical(VentVertical),
-    Diagonal(VentDiagonal),
+    Horizontal { y: usize, x1: usize, x2: usize },
+    Vertical { x: usize, y1: usize, y2: usize },
+    Diagonal { x1: usize, x2: usize, y1: usize, y2: usize },
 }
 
 impl FromStr for Vent {
@@ -50,61 +50,31 @@ impl FromStr for Vent {
 
         if y1 == y2 {
             let (x1, x2) = (x1, x2).ordered();
-            Ok(Self::Horizontal(VentHorizontal { y: y1, x1, x2 }))
+            Ok(Self::Horizontal { y: y1, x1, x2 })
         } else if x1 == x2 {
             let (y1, y2) = (y1, y2).ordered();
-            Ok(Self::Vertical(VentVertical { x: x1, y1, y2 }))
+            Ok(Self::Vertical { x: x1, y1, y2 })
         } else {
-            Ok(Self::Diagonal(VentDiagonal { x1, y1, x2, y2 }))
+            Ok(Self::Diagonal { x1, y1, x2, y2 })
         }
     }
 }
 
-#[derive(Debug)]
-pub struct VentHorizontal {
-    pub y: usize,
-    pub x1: usize,
-    pub x2: usize,
-}
-
-impl fmt::Display for VentHorizontal {
+impl fmt::Display for Vent {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.write_str(&format!(
-            "VentHorizontal {{ ({},{}) -> ({},{}) }}",
-            self.x1, self.y, self.x2, self.y
-        ))
-    }
-}
-
-#[derive(Debug)]
-pub struct VentVertical {
-    pub x: usize,
-    pub y1: usize,
-    pub y2: usize,
-}
-
-impl fmt::Display for VentVertical {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.write_str(&format!(
-            "VentVertical {{ ({},{}) -> ({},{}) }}",
-            self.x, self.y1, self.x, self.y2
-        ))
-    }
-}
-
-#[derive(Debug)]
-pub struct VentDiagonal {
-    pub x1: usize,
-    pub x2: usize,
-    pub y1: usize,
-    pub y2: usize,
-}
-
-impl fmt::Display for VentDiagonal {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.write_str(&format!(
-            "VentDiagonal {{ ({},{}) -> ({},{}) }}",
-            self.x1, self.y1, self.x2, self.y2
-        ))
+        match *self {
+            Vent::Horizontal { y, x1, x2 } => f.write_str(&format!(
+                "Horizontal {{ ({},{}) -> ({},{}) }}",
+                x1, y, x2, y
+            )),
+            Vent::Vertical { x, y1, y2 } => f.write_str(&format!(
+                "Vertical {{ ({},{}) -> ({},{}) }}",
+                x, y1, x, y2
+            )),
+            Vent::Diagonal { x1, x2, y1, y2 } => f.write_str(&format!(
+                "Diagonal {{ ({},{}) -> ({},{}) }}",
+                x1, y1, x2, y2
+            )),
+        }
     }
 }

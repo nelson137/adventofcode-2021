@@ -28,18 +28,18 @@ impl Day for Day5 {
         let mut diagram: Vec<Vec<usize>> = vec![vec![0_usize; width]; height];
 
         for ls in &vents {
-            match ls {
-                Vent::Horizontal(lsh) => {
-                    for point in &mut diagram[lsh.y][lsh.x1..=lsh.x2] {
+            match *ls {
+                Vent::Horizontal { x1, x2, y } => {
+                    for point in &mut diagram[y][x1..=x2] {
                         *point += 1;
                     }
                 }
-                Vent::Vertical(lsv) => {
-                    for row in &mut diagram[lsv.y1..=lsv.y2] {
-                        row[lsv.x] += 1;
+                Vent::Vertical { x, y1, y2 } => {
+                    for row in &mut diagram[y1..=y2] {
+                        row[x] += 1;
                     }
                 }
-                Vent::Diagonal(_) => (),
+                Vent::Diagonal { .. } => (),
             }
         }
 
@@ -55,22 +55,22 @@ impl Day for Day5 {
         let mut diagram: Vec<Vec<usize>> = vec![vec![0_usize; width]; height];
 
         for ls in &vents {
-            match ls {
-                Vent::Horizontal(lsh) => {
-                    for point in &mut diagram[lsh.y][lsh.x1..=lsh.x2] {
+            match *ls {
+                Vent::Horizontal { x1, x2, y } => {
+                    for point in &mut diagram[y][x1..=x2] {
                         *point += 1;
                     }
                 }
-                Vent::Vertical(lsv) => {
-                    for row in &mut diagram[lsv.y1..=lsv.y2] {
-                        row[lsv.x] += 1;
+                Vent::Vertical { x, y1, y2 } => {
+                    for row in &mut diagram[y1..=y2] {
+                        row[x] += 1;
                     }
                 }
-                Vent::Diagonal(lsd) => {
-                    let dy = if lsd.y1 <= lsd.y2 { 1 } else { -1 };
-                    let dx = if lsd.x1 <= lsd.x2 { 1 } else { -1 };
-                    let (mut y, mut x) = (lsd.y1 as isize, lsd.x1 as isize);
-                    let range = (lsd.y2 as isize - lsd.y1 as isize) * dy;
+                Vent::Diagonal { x1, x2, y1, y2 } => {
+                    let dy = if y1 <= y2 { 1 } else { -1 };
+                    let dx = if x1 <= x2 { 1 } else { -1 };
+                    let (mut y, mut x) = (y1 as isize, x1 as isize);
+                    let range = (y2 as isize - y1 as isize) * dy;
                     for _ in 0..=range {
                         diagram[y as usize][x as usize] += 1;
                         y += dy;
@@ -101,30 +101,30 @@ impl Day5 {
                 .parse()?;
 
             match &vent {
-                Vent::Horizontal(v_h) => {
-                    let max_x = max(v_h.x1, v_h.x2);
+                &Vent::Horizontal { x1, x2, y } => {
+                    let max_x = max(x1, x2);
                     if max_x > width {
                         width = max_x;
                     }
-                    if v_h.y > height {
-                        height = v_h.y
+                    if y > height {
+                        height = y
                     }
                 }
-                Vent::Vertical(v_v) => {
-                    let max_y = max(v_v.y1, v_v.y2);
+                &Vent::Vertical { x, y1, y2 } => {
+                    let max_y = max(y1, y2);
                     if max_y > height {
                         height = max_y;
                     }
-                    if v_v.x > width {
-                        width = v_v.x
+                    if x > width {
+                        width = x
                     }
                 }
-                Vent::Diagonal(v_d) => {
-                    let max_y = max(v_d.y1, v_d.y2);
+                &Vent::Diagonal { x1, x2, y1, y2 } => {
+                    let max_y = max(y1, y2);
                     if max_y > height {
                         height = max_y;
                     }
-                    let max_x = max(v_d.x1, v_d.x2);
+                    let max_x = max(x1, x2);
                     if max_x > width {
                         width = max_x;
                     }
