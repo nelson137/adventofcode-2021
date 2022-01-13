@@ -58,13 +58,13 @@ impl Node {
         }
     }
 
-    #[inline]
-    pub fn is_small(&self) -> bool {
-        match self {
-            Self::Small(_) => true,
-            _ => false,
-        }
-    }
+    // #[inline]
+    // pub fn is_small(&self) -> bool {
+    //     match self {
+    //         Self::Small(_) => true,
+    //         _ => false,
+    //     }
+    // }
 }
 
 impl Debug for Node {
@@ -109,11 +109,15 @@ impl CaveGraph {
         one_small_extra_visits: Option<usize>,
     ) -> usize {
         let mut path = Vec::with_capacity(self.nodes.len());
-        let mut visited = HashMap::from_iter(self.nodes.iter().map(|n| (n, 0)));
+        let mut small_visits =
+            HashMap::from_iter(self.nodes.iter().filter_map(|n| match *n {
+                Node::Small(_) => Some((n, 0)),
+                _ => None,
+            }));
         let mut count = 0;
         self.find_all_paths_impl(
             &mut path,
-            &mut visited,
+            &mut small_visits,
             one_small_extra_visits,
             &mut count,
             &Node::Start,
@@ -130,8 +134,8 @@ impl CaveGraph {
         node: &'a Node,
     ) {
         path.push(node);
-        if node.is_small() {
-            *small_visits.get_mut(node).unwrap() += 1;
+        if let Some(visits) = small_visits.get_mut(node) {
+            *visits += 1;
         }
 
         let did_visit_extra = if let Some(extra_visits) = one_small_extra_visits
@@ -148,14 +152,13 @@ impl CaveGraph {
                 if neighbor.is_start() {
                     continue;
                 }
-                if neighbor.is_small() {
-                    let visits = *small_visits.get(neighbor).unwrap();
+                if let Some(visits) = small_visits.get(neighbor) {
                     if let Some(extra_visits) = one_small_extra_visits {
-                        if visits >= extra_visits - 1 && did_visit_extra {
+                        if *visits >= extra_visits - 1 && did_visit_extra {
                             continue;
                         }
                     } else {
-                        if visits >= 1 {
+                        if *visits >= 1 {
                             continue;
                         }
                     }
@@ -171,8 +174,8 @@ impl CaveGraph {
         }
 
         path.pop();
-        if node.is_small() {
-            *small_visits.get_mut(node).unwrap() -= 1;
+        if let Some(visits) = small_visits.get_mut(node) {
+            *visits -= 1;
         }
     }
 }
