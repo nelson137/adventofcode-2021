@@ -90,14 +90,20 @@ impl CaveGraph {
 
     pub fn find_all_paths_with(
         &self,
-        skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, bool, usize) -> bool,
+        skip_node: impl Copy + Fn(&mut Vec<Option<usize>>, bool, usize) -> bool,
     ) -> usize {
         let mut path = Vec::with_capacity(self.nodes.len() * 2);
-        let mut visits = vec![0_usize; self.nodes.len()];
+        let mut visits = self
+            .nodes
+            .iter()
+            .map(|n| if n.is_small() { Some(0_usize) } else { None })
+            .collect();
+        let mut has_small_double_visit = false;
         let mut count = 0;
         self.find_all_paths_impl(
             &mut path,
             &mut visits,
+            &mut has_small_double_visit,
             skip_node,
             &mut count,
             self.start_i,
@@ -108,34 +114,46 @@ impl CaveGraph {
     fn find_all_paths_impl<'a>(
         &'a self,
         path: &mut Vec<usize>,
-        visits: &mut Vec<usize>,
-        skip_node: impl Copy + Fn(&Self, &mut Vec<usize>, bool, usize) -> bool,
+        small_visits: &mut Vec<Option<usize>>,
+        has_small_double_visit: &mut bool,
+        skip_node: impl Copy + Fn(&mut Vec<Option<usize>>, bool, usize) -> bool,
         count: &mut usize,
         node: usize,
     ) {
         path.push(node);
-        visits[node] += 1;
-
-        let small_double_visit = visits
-            .iter()
-            .zip(&self.nodes)
-            .find(|(v, n)| n.is_small() && **v >= 2)
-            .is_some();
+        if let Some(v) = &mut small_visits[node] {
+            *v += 1;
+            if *v >= 2 {
+                *has_small_double_visit = true;
+            }
+        }
 
         for a in &self.adj[node] {
             if *a == self.start_i
-                || skip_node(self, visits, small_double_visit, *a)
+                || skip_node(small_visits, *has_small_double_visit, *a)
             {
                 continue;
             }
             if *a == self.end_i {
                 *count += 1;
             } else {
-                self.find_all_paths_impl(path, visits, skip_node, count, *a);
+                self.find_all_paths_impl(
+                    path,
+                    small_visits,
+                    has_small_double_visit,
+                    skip_node,
+                    count,
+                    *a,
+                );
             }
         }
 
         path.pop();
-        visits[node] -= 1;
+        if let Some(v) = &mut small_visits[node] {
+            *v -= 1;
+            if *v >= 1 {
+                *has_small_double_visit = false;
+            }
+        }
     }
 }
