@@ -14,8 +14,8 @@ pub trait Day {
                     println!("{:?}", err);
                 }
                 let end = std::time::SystemTime::now();
-                let t = end.duration_since(begin)?.as_micros() as f32 / 1000.0;
-                println!("[answer in {} ms]", t);
+                let t = end.duration_since(begin)?.as_nanos() as f32 / 1.0e3;
+                println!("[answer in {} μs]", t);
                 t
             }};
         }
@@ -69,7 +69,7 @@ macro_rules! decl_day {
                         }
 
                         println!("{}\n", repeat_char!('=', width));
-                        println!("all answers in {} ms\n", time);
+                        println!("all answers in {} ms\n", time / 1.0e3);
                     }
                 }
                 Ok(())
