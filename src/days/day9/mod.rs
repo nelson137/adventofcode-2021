@@ -8,7 +8,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::Height;
@@ -22,7 +22,7 @@ pub struct Day9 {
 }
 
 impl Day for Day9 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let heights = self.parse_height_map()?;
         let max_i = heights.len() - 1;
         let max_j = heights[0].len() - 1;
@@ -92,12 +92,10 @@ impl Day for Day9 {
             local_min_sums += heights[max_i][max_j] + 1;
         }
 
-        println!("{}", local_min_sums);
-
-        Ok(())
+        ANSWER!(local_min_sums)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let mut heights = self.parse_basin_map()?;
 
         let mut n_basins = 0;
@@ -122,9 +120,7 @@ impl Day for Day9 {
 
         basin_sizes.sort();
         let answer = basin_sizes.iter().rev().take(3).fold(1, |acc, s| acc * s);
-        println!("{}", answer);
-
-        Ok(())
+        ANSWER!(answer)
     }
 }
 
