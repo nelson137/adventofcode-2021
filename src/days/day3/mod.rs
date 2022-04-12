@@ -8,7 +8,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 todays_input!(INFILE_PATH);
 
@@ -19,7 +19,7 @@ pub struct Day3 {
 }
 
 impl Day for Day3 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let (n_bits, report) = self.parse_report()?;
         let mut n_lines = 0_usize;
         let mut gamma_counts = vec![0_usize; n_bits];
@@ -49,12 +49,10 @@ impl Day for Day3 {
             }
         }
 
-        println!("{}", gamma * epsilon);
-
-        Ok(())
+        ANSWER!(gamma * epsilon)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let (n_bits, mut report) = self.parse_report()?;
         report.sort();
 
@@ -91,8 +89,9 @@ impl Day for Day3 {
 
         let oxy_answer = match oxy_window.len() {
             1 => oxy_window[0],
-            _ =>
-                return Err("failed to isolate one value for oxygen rate".into()),
+            _ => {
+                return Err("failed to isolate one value for oxygen rate".into())
+            }
         };
 
         let co2_answer = match co2_window.len() {
@@ -100,9 +99,7 @@ impl Day for Day3 {
             _ => return Err("failed to isolate one value for CO2 rate".into()),
         };
 
-        println!("{}", oxy_answer * co2_answer);
-
-        Ok(())
+        ANSWER!(oxy_answer * co2_answer)
     }
 }
 
