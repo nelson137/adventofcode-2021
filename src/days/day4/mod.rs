@@ -7,7 +7,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::Board;
@@ -21,7 +21,7 @@ pub struct Day4 {
 }
 
 impl Day for Day4 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let (numbers, mut boards) = self.parse_bingo()?;
 
         let mut maybe_answer = None;
@@ -36,15 +36,12 @@ impl Day for Day4 {
         }
 
         match maybe_answer {
-            Some(answer) => {
-                println!("{}", answer);
-                Ok(())
-            }
+            Some(answer) => ANSWER!(answer),
             None => Err("no solution found".into()),
         }
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let (numbers, mut boards) = self.parse_bingo()?;
 
         let num_boards = boards.len();
@@ -68,10 +65,7 @@ impl Day for Day4 {
         }
 
         match maybe_answer {
-            Some(answer) => {
-                println!("{}", answer);
-                Ok(())
-            }
+            Some(answer) => ANSWER!(answer),
             None => Err("no solution found".into()),
         }
     }
