@@ -7,7 +7,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::{Instruction, Paper};
@@ -21,27 +21,22 @@ pub struct Day13 {
 }
 
 impl Day for Day13 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let (mut paper, instructions) = self.parse_instructions()?;
 
         paper.fold(&instructions[0]);
 
-        let answer = paper.count_dots();
-        println!("{}", answer);
-
-        Ok(())
+        ANSWER!(paper.count_dots())
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let (mut paper, instructions) = self.parse_instructions()?;
 
         for ins in &instructions {
             paper.fold(ins);
         }
 
-        print!("{}", paper);
-
-        Ok(())
+        ANSWER!(paper)
     }
 }
 
@@ -65,8 +60,9 @@ impl Day13 {
             let mut xy = line.split(',');
 
             match (xy.next(), xy.next(), xy.next()) {
-                (Some(x), Some(y), None) =>
-                    coords.push((x.trim().parse()?, y.trim().parse()?)),
+                (Some(x), Some(y), None) => {
+                    coords.push((x.trim().parse()?, y.trim().parse()?))
+                }
                 _ => return Err(format!("invalid line: {}", line).into()),
             };
         }
