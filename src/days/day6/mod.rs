@@ -2,7 +2,7 @@ use std::{error::Error, fs::File, io::Read, path::PathBuf};
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 todays_input!(INFILE_PATH);
 
@@ -13,16 +13,12 @@ pub struct Day6 {
 }
 
 impl Day for Day6 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
-        let answer = self.calc_population(80)?;
-        println!("answer = {}", answer);
-        Ok(())
+    fn part1(&self) -> PartResult {
+        ANSWER!(self.calc_population(80)?)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
-        let answer = self.calc_population(256)?;
-        println!("{}", answer);
-        Ok(())
+    fn part2(&self) -> PartResult {
+        ANSWER!(self.calc_population(256)?)
     }
 }
 
@@ -36,14 +32,16 @@ impl Day6 {
 
         let mut population = [0_usize; 9];
         match maybe_timers {
-            Ok(timers) =>
+            Ok(timers) => {
                 for t in timers {
                     population[t] += 1;
-                },
-            _ =>
+                }
+            }
+            _ => {
                 return Err(
                     format!("invalid initial population: {}", input).into()
-                ),
+                )
+            }
         }
 
         for d in 0..days {
