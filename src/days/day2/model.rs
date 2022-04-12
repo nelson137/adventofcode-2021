@@ -11,18 +11,9 @@ impl FromStr for Command {
     type Err = Box<dyn Error>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut parts = s.split_whitespace();
-
-        let direction = match parts.next() {
-            Some(d) => d,
-            None => return Err("command has no direction".into()),
-        };
-
-        let magnitude: isize = match parts.next().and_then(|s| s.parse().ok()) {
-            Some(m) => m,
-            None => return Err(format!("invalid command: {}", s).into()),
-        };
-
+        let i = s.find(char::is_whitespace).unwrap();
+        let direction = &s[..i];
+        let magnitude = (s.as_bytes()[i + 1] - '0' as u8) as isize;
         match direction {
             "forward" => Ok(Command::Forward(magnitude)),
             "up" => Ok(Command::Up(magnitude)),
