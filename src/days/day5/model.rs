@@ -31,22 +31,16 @@ impl FromStr for Vent {
 
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         let mut points = value.split(" -> ");
-        let (p1, p2) = match (points.next(), points.next(), points.next()) {
-            (Some(a), Some(b), None) => (a, b),
-            _ => return Err(format!("invalid vent: {}", value).into()),
-        };
 
-        let mut p1_xy = p1.split(',');
-        let (x1, y1) = match (p1_xy.next(), p1_xy.next(), p1_xy.next()) {
-            (Some(x), Some(y), None) => (x.trim().parse()?, y.trim().parse()?),
-            _ => return Err(format!("invalid point in vent: {}", value).into()),
-        };
+        let mut p = points.next().unwrap();
+        let mut i = p.find(',').unwrap();
+        let x1 = p[..i].parse().unwrap();
+        let y1 = p[i + 1..].parse().unwrap();
 
-        let mut p2_xy = p2.split(',');
-        let (x2, y2) = match (p2_xy.next(), p2_xy.next(), p2_xy.next()) {
-            (Some(x), Some(y), None) => (x.trim().parse()?, y.trim().parse()?),
-            _ => return Err(format!("invalid point in vent: {}", value).into()),
-        };
+        p = points.next().unwrap();
+        i = p.find(',').unwrap();
+        let x2 = p[..i].parse().unwrap();
+        let y2 = p[i + 1..].parse().unwrap();
 
         if y1 == y2 {
             let (x1, x2) = (x1, x2).ordered();
