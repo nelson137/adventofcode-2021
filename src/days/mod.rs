@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, time::SystemTime};
 
 use structopt::StructOpt;
 use term_size::dimensions_stdout;
@@ -13,8 +13,14 @@ pub struct TimedSolution {
 }
 
 impl TimedSolution {
-    fn new(solution: PartResult, time: f32) -> Self {
-        Self { solution, time }
+    fn calculate(
+        solver: impl FnOnce() -> PartResult,
+    ) -> Result<Self, Box<dyn Error>> {
+        let begin = SystemTime::now();
+        let solution = solver();
+        let end = SystemTime::now();
+        let time = end.duration_since(begin)?.as_nanos() as f32 / 1.0e3;
+        Ok(Self { solution, time })
     }
 
     fn print(&self) {
@@ -27,25 +33,50 @@ impl TimedSolution {
 }
 
 pub trait Day {
-    fn run(&self) -> Result<(TimedSolution, TimedSolution), Box<dyn Error>> {
-        macro_rules! run_timed_part {
-            ($part:expr) => {{
-                let begin = std::time::SystemTime::now();
-                let sol = $part;
-                let end = std::time::SystemTime::now();
-                let t = end.duration_since(begin)?.as_nanos() as f32 / 1.0e3;
-                TimedSolution::new(sol, t)
-            }};
-        }
+    fn run_part1(&self) -> Result<TimedSolution, Box<dyn Error>> {
+        TimedSolution::calculate(|| self.part1())
+    }
 
-        let ts1 = run_timed_part!(self.part1());
-        let ts2 = run_timed_part!(self.part2());
-        Ok((ts1, ts2))
+    fn run_part2(&self) -> Result<TimedSolution, Box<dyn Error>> {
+        TimedSolution::calculate(|| self.part2())
+    }
+
+    fn run(&self) -> Result<(TimedSolution, TimedSolution), Box<dyn Error>> {
+        Ok((self.run_part1()?, self.run_part2()?))
+    }
+
+    fn run_and_print(&self) -> Result<(f32, f32), Box<dyn Error>> {
+        let (ts1, ts2) = self.run()?;
+        println!("\n=== Part 1 ===");
+        ts1.print();
+        println!("\n=== Part 2 ===");
+        ts2.print();
+        println!("");
+        Ok((ts1.time, ts2.time))
     }
 
     fn part1(&self) -> PartResult;
 
     fn part2(&self) -> PartResult;
+}
+
+#[derive(StructOpt)]
+pub struct Cli {
+    #[structopt(long)]
+    bench: bool,
+
+    #[structopt(subcommand)]
+    day: CliDay,
+}
+
+impl Cli {
+    pub fn run(&self) -> Result<(), Box<dyn Error>> {
+        if self.bench {
+            self.day.bench()
+        } else {
+            self.day.run()
+        }
+    }
 }
 
 macro_rules! decl_day {
@@ -56,21 +87,16 @@ macro_rules! decl_day {
         )+
 
         #[derive(StructOpt)]
-        pub enum Cli {
+        pub enum CliDay {
             $($cli($cli),)+
             All,
         }
 
-        impl Cli {
+        impl CliDay {
             pub fn run(&self) -> Result<(), Box<dyn Error>> {
                 match self {
                     $(Self::$cli(day) => {
-                        let (ts1, ts2) = day.run()?;
-                        println!("\n=== Part 1 ===");
-                        ts1.print();
-                        println!("\n=== Part 2 ===");
-                        ts2.print();
-                        println!("");
+                        day.run_and_print()?;
                     })+
                     Self::All => {
                         let all_clis: &[Box<dyn Day>] = &[$(Box::new($cli::from_iter::<&[&str]>(&[])),)+];
@@ -82,17 +108,82 @@ macro_rules! decl_day {
                         for (i, cli) in all_clis.iter().enumerate() {
                             print!("===[ Day {:02} ]===", i + 1);
                             println!("{}", repeat_char!('=', width - 16));
-                            let (ts1, ts2) = cli.run()?;
-                            println!("\n=== Part 1 ===");
-                            ts1.print();
-                            println!("\n=== Part 2 ===");
-                            ts2.print();
-                            println!("");
-                            time += ts1.time + ts2.time;
+                            let (t1, t2) = cli.run_and_print()?;
+                            time += t1 + t2;
                         }
 
                         println!("{}\n", repeat_char!('=', width));
                         println!("all answers in {} ms\n", time / 1.0e3);
+                    }
+                }
+                Ok(())
+            }
+
+            pub fn bench(&self) -> Result<(), Box<dyn Error>> {
+                const N_WARMUPS: usize = 5;
+                macro_rules! avg_part_with {
+                    ($runner:expr) => {{
+                        let mut t = f32::MAX;
+                        // Warmup
+                        for _ in 0..N_WARMUPS {
+                            t = t.min($runner.time);
+                        }
+                        let n = (1.0e6 / t) as usize;
+                        if n < 3 {
+                            println!("warning: part will only be run {} times", n);
+                        }
+                        // Sum runtimes
+                        t = 0.0;
+                        for _ in 0..n {
+                            t += $runner.time;
+                        }
+                        // Average
+                        t / n as f32
+                    }};
+                }
+
+                match self {
+                    $(Self::$cli(day) => {
+                        println!("");
+                        println!("Part    {:>10}", "Avg (ms)");
+                        println!("--------{}", repeat_char!('-', 10));
+                        let avg1 = avg_part_with!(day.run_part1()?) / 1.0e3;
+                        println!("   1    {:10.4}", avg1);
+                        let avg2 = avg_part_with!(day.run_part2()?) / 1.0e3;
+                        println!("   2    {:10.4}", avg2);
+                        println!("--------{}", repeat_char!('-', 10));
+                        println!("        {:10.4}", avg1 + avg2);
+                        println!("");
+                    })+
+                    Self::All => {
+                        let all_clis: &[Box<dyn Day>] =
+                            &[$(Box::new($cli::from_iter::<&[&str]>(&[]))),+];
+
+                        println!("");
+
+                        println!("Day    Part 1 Avg    Part 2 Avg    Total (ms)");
+                        println!("---------------------------------------------");
+                        let mut total = 0.0;
+                        for (i, cli) in all_clis.iter().enumerate() {
+                            let avg1 = avg_part_with!(cli.run_part1()?) / 1.0e3;
+                            let avg2 = avg_part_with!(cli.run_part2()?) / 1.0e3;
+                            let sum = avg1 + avg2;
+                            total += sum;
+                            println!(
+                                "{:3}    {:>10.4}    {:>10.4}    {:>10.4}",
+                                i + 1, avg1, avg2, sum
+                            );
+                        }
+                        println!("---------------------------------------------");
+                        println!(
+                            "{:3}    {:10}    {:10}    {:10.4}",
+                            " ",
+                            " ",
+                            " ",
+                            total
+                        );
+
+                        println!("");
                     }
                 }
                 Ok(())
