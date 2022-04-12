@@ -1,8 +1,8 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::Octopuses;
@@ -18,23 +18,16 @@ pub struct Day11 {
 }
 
 impl Day for Day11 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let octopuses = Octopuses::from(&self.infile)?;
-
-        let flashes: usize = octopuses.take(100).sum();
-        println!("{}", flashes);
-
-        Ok(())
+        ANSWER!(octopuses.take(100).sum::<usize>())
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let octopuses = Octopuses::from(&self.infile)?;
         let n_octopuses = octopuses.len();
-
         let synchronized_step =
             octopuses.take_while(|flashes| *flashes < n_octopuses).count();
-        println!("{}", synchronized_step + 1);
-
-        Ok(())
+        ANSWER!(synchronized_step + 1)
     }
 }
