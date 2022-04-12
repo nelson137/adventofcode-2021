@@ -7,7 +7,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::{CaveGraph, Node};
@@ -21,17 +21,16 @@ pub struct Day12 {
 }
 
 impl Day for Day12 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let cave = self.parse_cave_graph()?;
         let answer = cave.find_all_paths_with(|visits, _, n| match visits[n] {
             Some(v) if v >= 1 => true,
             _ => false,
         });
-        println!("{}", answer);
-        Ok(())
+        ANSWER!(answer)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let cave = self.parse_cave_graph()?;
         let answer =
             cave.find_all_paths_with(|visits, small_double_visit, n| {
@@ -40,8 +39,7 @@ impl Day for Day12 {
                     _ => false,
                 }
             });
-        println!("{}", answer);
-        Ok(())
+        ANSWER!(answer)
     }
 }
 
