@@ -1,7 +1,7 @@
 use std::{
     error::Error,
     fs::File,
-    io::{BufRead, BufReader, Seek, SeekFrom},
+    io::{BufRead, BufReader},
     ops::BitAnd,
     path::PathBuf,
 };
@@ -12,6 +12,8 @@ use super::{todays_input, Day, PartResult, ANSWER};
 
 todays_input!(INFILE_PATH);
 
+const N_BITS: usize = 12;
+
 #[derive(StructOpt)]
 pub struct Day3 {
     #[structopt(default_value = &INFILE_PATH)]
@@ -20,13 +22,13 @@ pub struct Day3 {
 
 impl Day for Day3 {
     fn part1(&self) -> PartResult {
-        let (n_bits, report) = self.parse_report()?;
+        let report = self.parse_report()?;
         let mut n_lines = 0_usize;
-        let mut gamma_counts = vec![0_usize; n_bits];
+        let mut gamma_counts = vec![0_usize; N_BITS];
 
         for value in &report {
             let mut bit_index = 1;
-            for index in 0..n_bits {
+            for index in 0..N_BITS {
                 if value.bitand(bit_index) > 0 {
                     gamma_counts[index] += 1;
                 }
@@ -53,10 +55,10 @@ impl Day for Day3 {
     }
 
     fn part2(&self) -> PartResult {
-        let (n_bits, mut report) = self.parse_report()?;
+        let mut report = self.parse_report()?;
         report.sort();
 
-        let mut bit_index = 1_usize << (n_bits - 1);
+        let mut bit_index = 1_usize << (N_BITS - 1);
         let mut oxy_window = report.as_slice();
         let mut co2_window = report.as_slice();
         while bit_index > 0 && (oxy_window.len() > 1 || co2_window.len() > 1) {
@@ -104,39 +106,18 @@ impl Day for Day3 {
 }
 
 impl Day3 {
-    fn parse_report(&self) -> Result<(usize, Vec<usize>), Box<dyn Error>> {
-        let mut file = File::open(&self.infile)?;
-
-        let n_bits = 'n_bits: loop {
-            for line_res in BufReader::new(&file).lines().next() {
-                if let Ok(line) = line_res {
-                    if usize::from_str_radix(&line, 2).is_ok() {
-                        file.seek(SeekFrom::Start(0))?;
-                        break 'n_bits line.len();
-                    }
-                }
-            }
-            return Err("failed to find valid line".into());
-        };
-
+    fn parse_report(&self) -> Result<Vec<usize>, Box<dyn Error>> {
         let mut report = Vec::new();
 
-        for line_res in BufReader::new(&file).lines() {
+        for line_res in BufReader::new(File::open(&self.infile)?).lines() {
             let line = line_res
                 .map_err(|e| format!("invalid line: {}", e).to_string())?;
-
-            if line.len() != n_bits {
-                return Err(format!("invalid line: {}", line).into());
-            }
-
-            let value = match usize::from_str_radix(&line, 2) {
-                Ok(v) => v,
+            match usize::from_str_radix(&line, 2) {
+                Ok(value) => report.push(value),
                 _ => return Err(format!("invalid value: {}", line).into()),
-            };
-
-            report.push(value);
+            }
         }
 
-        Ok((n_bits, report))
+        Ok(report)
     }
 }
