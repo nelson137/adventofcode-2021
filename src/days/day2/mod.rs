@@ -7,7 +7,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::Command;
@@ -21,7 +21,7 @@ pub struct Day2 {
 }
 
 impl Day for Day2 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let commands = self.parse_commands()?;
         let mut x = 0_isize;
         let mut y = 0_isize;
@@ -34,12 +34,10 @@ impl Day for Day2 {
             }
         }
 
-        println!("{}", x * y);
-
-        Ok(())
+        ANSWER!(x * y)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let commands = self.parse_commands()?;
         let mut x = 0_isize;
         let mut y = 0_isize;
@@ -56,9 +54,7 @@ impl Day for Day2 {
             }
         }
 
-        println!("{}", x * y);
-
-        Ok(())
+        ANSWER!(x * y)
     }
 }
 
