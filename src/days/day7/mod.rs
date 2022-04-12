@@ -2,7 +2,7 @@ use std::{error::Error, fs::File, io::Read, path::PathBuf};
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 todays_input!(INFILE_PATH);
 
@@ -13,7 +13,7 @@ pub struct Day7 {
 }
 
 impl Day for Day7 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let mut crabs = self.parse_crap_positions()?;
         crabs.sort();
 
@@ -24,12 +24,10 @@ impl Day for Day7 {
             .map(|c| (*c as isize - median as isize).abs() as usize)
             .sum();
 
-        println!("{}", answer);
-
-        Ok(())
+        ANSWER!(answer)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let crabs = self.parse_crap_positions()?;
 
         macro_rules! cost {
@@ -68,9 +66,7 @@ impl Day for Day7 {
             }
         }
 
-        println!("{}", min_cost);
-
-        Ok(())
+        ANSWER!(min_cost)
     }
 }
 
