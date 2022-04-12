@@ -7,7 +7,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::Entry;
@@ -23,7 +23,7 @@ pub struct Day8 {
 }
 
 impl Day for Day8 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let entries = self.parse_entries()?;
 
         let mut count = 0;
@@ -38,12 +38,10 @@ impl Day for Day8 {
                 .count();
         }
 
-        println!("{}", count);
-
-        Ok(())
+        ANSWER!(count)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let entries = self.parse_entries()?;
 
         let mut answer = 0;
@@ -51,9 +49,7 @@ impl Day for Day8 {
             answer += entry.solve();
         }
 
-        println!("{}", answer);
-
-        Ok(())
+        ANSWER!(answer)
     }
 }
 
