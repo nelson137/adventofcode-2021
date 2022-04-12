@@ -7,7 +7,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::NavChunk;
@@ -21,7 +21,7 @@ pub struct Day10 {
 }
 
 impl Day for Day10 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let chunks = self.parse_nav_chunks()?;
         let mut stack = Vec::new();
 
@@ -45,12 +45,10 @@ impl Day for Day10 {
             }
         }
 
-        println!("{}", score);
-
-        Ok(())
+        ANSWER!(score)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let chunks = self.parse_nav_chunks()?;
         let mut stack = Vec::new();
         let mut scores = Vec::new();
@@ -80,9 +78,7 @@ impl Day for Day10 {
 
         scores.sort();
         let answer = scores[scores.len() / 2];
-        println!("{}", answer);
-
-        Ok(())
+        ANSWER!(answer)
     }
 }
 
