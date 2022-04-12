@@ -73,8 +73,7 @@ impl Day for Day4 {
 
 impl Day4 {
     fn parse_bingo(&self) -> Result<(Vec<usize>, Vec<Board>), Box<dyn Error>> {
-        let file = File::open(&self.infile)?;
-        let mut lines = BufReader::new(&file).lines();
+        let mut lines = BufReader::new(File::open(&self.infile)?).lines();
 
         let num_str = match lines.next() {
             Some(num_str_res) => match num_str_res {
@@ -92,10 +91,16 @@ impl Day4 {
         };
 
         let mut boards: Vec<Board> = Vec::new();
+        let mut b = Vec::with_capacity(5);
         while let Some(_spacer) = lines.next() {
-            let row_strs =
-                (&mut lines).take(5).collect::<Result<Vec<_>, _>>()?;
-            boards.push(row_strs.try_into()?);
+            b.clear();
+            for _ in 0..5 {
+                match lines.next() {
+                    Some(Ok(r)) => b.push(r),
+                    _ => return Err("invalid board".into()),
+                }
+            }
+            boards.push(b[..5].try_into()?);
         }
 
         Ok((numbers, boards))

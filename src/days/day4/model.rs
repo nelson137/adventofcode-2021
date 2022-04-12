@@ -4,6 +4,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+#[derive(Default)]
 pub struct Board([BoardRow; 5]);
 
 impl Board {
@@ -39,21 +40,15 @@ impl Board {
     }
 }
 
-impl TryFrom<Vec<String>> for Board {
+impl TryFrom<&[String]> for Board {
     type Error = Box<dyn Error>;
 
-    fn try_from(value: Vec<String>) -> Result<Self, Self::Error> {
-        Ok(Self(
-            value
-                .into_iter()
-                .map(TryInto::try_into)
-                .collect::<Result<Vec<_>, _>>()?
-                .try_into()
-                .map_err(|v: Vec<BoardRow>| {
-                    format!("invalid number of rows for board: {}", v.len())
-                        .to_string()
-                })?,
-        ))
+    fn try_from(lines: &[String]) -> Result<Self, Self::Error> {
+        let mut this = Self::default();
+        for i in 0..5 {
+            this.0[i] = lines[i].as_str().try_into()?;
+        }
+        Ok(this)
     }
 }
 
@@ -66,21 +61,22 @@ impl Debug for Board {
     }
 }
 
+#[derive(Default)]
 struct BoardRow([BoardSpot; 5]);
 
-impl TryFrom<String> for BoardRow {
+impl TryFrom<&str> for BoardRow {
     type Error = Box<dyn Error>;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        let row = value
-            .split_whitespace()
-            .map(|s| s.parse().map(BoardSpot::new))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| format!("invalid row: {}", value).to_string())?;
-        Ok(Self(row.try_into().map_err(|v: Vec<BoardSpot>| {
-            format!("invalid number of values for board row: {}", v.len())
-                .to_string()
-        })?))
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let mut this = Self::default();
+        let mut cols = value.split_ascii_whitespace();
+        for i in 0..5 {
+            match cols.next().map(str::parse) {
+                Some(Ok(v)) => this.0[i] = BoardSpot::new(v),
+                _ => return Err(format!("invalid board row: {}", value).into()),
+            }
+        }
+        Ok(this)
     }
 }
 
@@ -108,6 +104,7 @@ impl Debug for BoardRow {
     }
 }
 
+#[derive(Default)]
 struct BoardSpot {
     value: usize,
     marked: bool,
