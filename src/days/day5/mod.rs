@@ -8,7 +8,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 mod model;
 use self::model::Vent;
@@ -22,7 +22,7 @@ pub struct Day5 {
 }
 
 impl Day for Day5 {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         let (width, height, vents) = self.parse_vents()?;
 
         let mut diagram: Vec<Vec<usize>> = vec![vec![0_usize; width]; height];
@@ -43,13 +43,10 @@ impl Day for Day5 {
             }
         }
 
-        let answer = diagram.iter().flatten().filter(|p| **p >= 2).count();
-        println!("{}", answer);
-
-        Ok(())
+        ANSWER!(count_overlapping_vents(&diagram))
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
+    fn part2(&self) -> PartResult {
         let (width, height, vents) = self.parse_vents()?;
 
         let mut diagram: Vec<Vec<usize>> = vec![vec![0_usize; width]; height];
@@ -80,10 +77,7 @@ impl Day for Day5 {
             }
         }
 
-        let answer = diagram.iter().flatten().filter(|p| **p >= 2).count();
-        println!("{}", answer);
-
-        Ok(())
+        ANSWER!(count_overlapping_vents(&diagram))
     }
 }
 
@@ -136,4 +130,8 @@ impl Day5 {
 
         Ok((width + 1, height + 1, vents))
     }
+}
+
+fn count_overlapping_vents(diagram: &Vec<Vec<usize>>) -> usize {
+    diagram.iter().flatten().filter(|p| **p >= 2).count()
 }
