@@ -7,7 +7,7 @@ use std::{
 
 use structopt::StructOpt;
 
-use super::{todays_input, Day};
+use super::{todays_input, Day, PartResult, ANSWER};
 
 todays_input!(INFILE_PATH);
 
@@ -18,13 +18,13 @@ pub struct DayN {
 }
 
 impl Day for DayN {
-    fn part1(&self) -> Result<(), Box<dyn Error>> {
+    fn part1(&self) -> PartResult {
         self.parse()?;
-        Ok(())
+        ANSWER!(1)
     }
 
-    fn part2(&self) -> Result<(), Box<dyn Error>> {
-        Ok(())
+    fn part2(&self) -> PartResult {
+        ANSWER!(2)
     }
 }
 

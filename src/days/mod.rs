@@ -1,39 +1,51 @@
-use std::error::Error;
+use std::{error::Error, fmt::Display};
 
 use structopt::StructOpt;
 use term_size::dimensions_stdout;
 
 use crate::util::repeat_char;
 
+pub type PartResult = Result<Box<dyn Display>, Box<dyn Error>>;
+
+pub struct TimedSolution {
+    solution: PartResult,
+    time: f32,
+}
+
+impl TimedSolution {
+    fn new(solution: PartResult, time: f32) -> Self {
+        Self { solution, time }
+    }
+
+    fn print(&self) {
+        match &self.solution {
+            Ok(answer) => println!("{}", answer),
+            Err(err) => println!("{:?}", err),
+        }
+        println!("[answer in {} μs]", self.time);
+    }
+}
+
 pub trait Day {
-    fn run(&self) -> Result<f32, Box<dyn Error>> {
+    fn run(&self) -> Result<(TimedSolution, TimedSolution), Box<dyn Error>> {
         macro_rules! run_timed_part {
             ($part:expr) => {{
                 let begin = std::time::SystemTime::now();
-                if let Err(err) = $part {
-                    println!("{:?}", err);
-                }
+                let sol = $part;
                 let end = std::time::SystemTime::now();
                 let t = end.duration_since(begin)?.as_nanos() as f32 / 1.0e3;
-                println!("[answer in {} μs]", t);
-                t
+                TimedSolution::new(sol, t)
             }};
         }
 
-        let mut time = 0.0;
-
-        println!("\n=== Part 1 ===");
-        time += run_timed_part!(self.part1());
-        println!("\n=== Part 2 ===");
-        time += run_timed_part!(self.part2());
-        println!("");
-
-        Ok(time)
+        let ts1 = run_timed_part!(self.part1());
+        let ts2 = run_timed_part!(self.part2());
+        Ok((ts1, ts2))
     }
 
-    fn part1(&self) -> Result<(), Box<dyn Error>>;
+    fn part1(&self) -> PartResult;
 
-    fn part2(&self) -> Result<(), Box<dyn Error>>;
+    fn part2(&self) -> PartResult;
 }
 
 macro_rules! decl_day {
@@ -53,7 +65,12 @@ macro_rules! decl_day {
             pub fn run(&self) -> Result<(), Box<dyn Error>> {
                 match self {
                     $(Self::$cli(day) => {
-                        day.run()?;
+                        let (ts1, ts2) = day.run()?;
+                        println!("\n=== Part 1 ===");
+                        ts1.print();
+                        println!("\n=== Part 2 ===");
+                        ts2.print();
+                        println!("");
                     })+
                     Self::All => {
                         let all_clis: &[Box<dyn Day>] = &[$(Box::new($cli::from_iter::<&[&str]>(&[])),)+];
@@ -65,7 +82,13 @@ macro_rules! decl_day {
                         for (i, cli) in all_clis.iter().enumerate() {
                             print!("===[ Day {:02} ]===", i + 1);
                             println!("{}", repeat_char!('=', width - 16));
-                            time += cli.run()?;
+                            let (ts1, ts2) = cli.run()?;
+                            println!("\n=== Part 1 ===");
+                            ts1.print();
+                            println!("\n=== Part 2 ===");
+                            ts2.print();
+                            println!("");
+                            time += ts1.time + ts2.time;
                         }
 
                         println!("{}\n", repeat_char!('=', width));
@@ -117,3 +140,10 @@ macro_rules! todays_input {
     };
 }
 pub(self) use todays_input;
+
+macro_rules! ANSWER {
+    ($value:expr) => {
+        Ok(Box::new($value))
+    };
+}
+pub(self) use ANSWER;
