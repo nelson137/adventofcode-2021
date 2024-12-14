@@ -1,0 +1,40 @@
+NNCB
+
+CH -> CB
+HH -> HN
+CB -> CH
+NH -> NC
+HB -> HC
+HC -> HB
+HN -> HC
+NN -> NC
+BH -> BH
+NC -> NB
+NB -> NB
+BN -> BB
+BB -> BN
+BC -> BB
+CC -> CN
+CN -> CC
+
+
+
+DIRECTED GRAPH WITH CYCLES:
+
+CH -> CB
+^------/
+
+HH -> HN -> HC -> HB
+            ^------/
+
+NH -> NC -> NB
+NN -^       ^/
+
+BH
+^/
+
+BC -> BB -> BN
+      ^------/
+
+CN -> CC
+^------/
